@@ -1,7 +1,7 @@
 package com.example.libraryapp.service;
 
-
 import com.example.libraryapp.dto.BookRequestDto;
+import com.example.libraryapp.dto.BookResponseDto;
 import com.example.libraryapp.entity.Author;
 import com.example.libraryapp.entity.Book;
 import com.example.libraryapp.entity.Publisher;
@@ -61,12 +61,13 @@ class BookServiceTest {
         when(authorService.createAuthor(dto.getAuthorNameSurname())).thenReturn(author);
         when(bookRepository.save(any(Book.class))).thenReturn(savedBook);
 
-        Book result = bookService.createBook(dto);
+        // DTO tipine göre çağrı
+        BookResponseDto result = bookService.createBook(dto);
 
         assertNotNull(result);
         assertEquals("Test Book", result.getTitle());
-        assertEquals("Test Publisher", result.getPublisher().getPublisherName());
-        assertEquals("John Doe", result.getAuthor().getAuthorNameSurname());
+        assertEquals("Test Publisher", result.getPublisherName());
+        assertEquals("John Doe", result.getAuthorNameSurname());
 
         verify(bookRepository, times(1)).save(any(Book.class));
     }
@@ -80,7 +81,7 @@ class BookServiceTest {
 
         when(bookRepository.findAll()).thenReturn(List.of(book1, book2));
 
-        List<Book> result = bookService.getBooksStartingWithA();
+        List<BookResponseDto> result = bookService.getBooksStartingWithA();
 
         assertEquals(1, result.size());
         assertEquals("Alpha", result.get(0).getTitle());
@@ -95,7 +96,7 @@ class BookServiceTest {
 
         when(bookRepository.findByPublishedYearAfter(2023)).thenReturn(List.of(book1));
 
-        List<Book> result = bookService.getBooksAfter2023();
+        List<BookResponseDto> result = bookService.getBooksAfter2023();
 
         assertEquals(1, result.size());
         assertEquals(2024, result.get(0).getPublishedYear());

@@ -1,6 +1,7 @@
 package com.example.libraryapp.service;
 
 import com.example.libraryapp.dto.BookRequestDto;
+import com.example.libraryapp.dto.BookResponseDto;
 import com.example.libraryapp.entity.Author;
 import com.example.libraryapp.entity.Book;
 import com.example.libraryapp.entity.Publisher;
@@ -24,9 +25,10 @@ public class BookService {
         this.authorService = authorService;
     }
 
-    public Book createBook(BookRequestDto dto) {
+    public BookResponseDto createBook(BookRequestDto dto) {
 
-        Publisher publisher = publisherService.getOrCreatePublisher(dto.getPublisherName());
+        Publisher publisher =
+                publisherService.getOrCreatePublisher(dto.getPublisherName());
 
         Book book = new Book();
         book.setTitle(dto.getTitle());
@@ -35,43 +37,56 @@ public class BookService {
         book.setPublishedYear(dto.getPublishedYear());
         book.setPublisher(publisher);
 
-        Author author = authorService.createAuthor(dto.getAuthorNameSurname());
+        Author author =
+                authorService.createAuthor(dto.getAuthorNameSurname());
         author.setBook(book);
         book.setAuthor(author);
 
-        return bookRepository.save(book);
+        Book savedBook = bookRepository.save(book);
+
+        return mapToDto(savedBook);
     }
 
-    public List<Book> getAllBooks() {
-        return bookRepository.findAll();
+    public List<BookResponseDto> getAllBooks() {
+        return bookRepository.findAll()
+                .stream()
+                .map(this::mapToDto)
+                .toList();
     }
+
     // READ BY ID
-    public Book getBookById(Long id) {
-        return bookRepository.findById(id).orElse(null);
+    public BookResponseDto getBookById(Long id) {
+        return bookRepository.findById(id)
+                .map(this::mapToDto)
+                .orElse(null);
     }
+
 
     // UPDATE
-    public Book updateBook(Long id, BookRequestDto dto) {
-        return bookRepository.findById(id).map(book -> {
-            book.setTitle(dto.getTitle());
-            book.setPrice(dto.getPrice());
-            book.setIsbn13(dto.getIsbn13());
-            book.setPublishedYear(dto.getPublishedYear());
+    public BookResponseDto updateBook(Long id, BookRequestDto dto) {
+        return bookRepository.findById(id)
+                .map(book -> {
+                    book.setTitle(dto.getTitle());
+                    book.setPrice(dto.getPrice());
+                    book.setIsbn13(dto.getIsbn13());
+                    book.setPublishedYear(dto.getPublishedYear());
 
-            Publisher publisher = publisherService.getOrCreatePublisher(dto.getPublisherName());
-            book.setPublisher(publisher);
+                    Publisher publisher =
+                            publisherService.getOrCreatePublisher(dto.getPublisherName());
+                    book.setPublisher(publisher);
 
-            Author author = book.getAuthor();
-            if (author == null) {
-                author = authorService.createAuthor(dto.getAuthorNameSurname());
-                author.setBook(book);
-                book.setAuthor(author);
-            } else {
-                author.setAuthorNameSurname(dto.getAuthorNameSurname());
-            }
+                    Author author = book.getAuthor();
+                    if (author == null) {
+                        author = authorService.createAuthor(dto.getAuthorNameSurname());
+                        author.setBook(book);
+                        book.setAuthor(author);
+                    } else {
+                        author.setAuthorNameSurname(dto.getAuthorNameSurname());
+                    }
 
-            return bookRepository.save(book);
-        }).orElse(null);
+                    return mapToDto(bookRepository.save(book));
+                })
+                .orElse(null);
     }
 
     // DELETE
@@ -80,21 +95,50 @@ public class BookService {
     }
 
 
-    public List<Book> getBooksStartingWithA() {
+    public List<BookResponseDto> getBooksStartingWithA() {
         return bookRepository.findAll().stream()
                 .filter(book -> book.getTitle().startsWith("A"))
+                .map(this::mapToDto)
                 .toList();
     }
 
-    public List<Book> getBooksAfter2023() {
-        return bookRepository.findByPublishedYearAfter(2023);
+
+    public List<BookResponseDto> getBooksAfter2023() {
+        return bookRepository.findByPublishedYearAfter(2023)
+                .stream()
+                .map(this::mapToDto)
+                .toList();
     }
-    public List<Book> getBooksOfTwoPublishers() {
+
+    public List<BookResponseDto> getBooksOfTwoPublishers() {
         // ilk iki yayinevini al
-        List<Publisher> topTwoPublishers = publisherService.getTop2Publishers();
+        List<Publisher> topTwoPublishers =
+                publisherService.getTop2Publishers();
 
         // Yayinevlerindeki kitaplari al
-        return bookRepository.findByPublisherIn(topTwoPublishers);
+        return bookRepository.findByPublisherIn(topTwoPublishers)
+                .stream()
+                .map(this::mapToDto)
+                .toList();
+    }
+
+    private BookResponseDto mapToDto(Book book) {
+        BookResponseDto dto = new BookResponseDto();
+        dto.setId(book.getId());
+        dto.setTitle(book.getTitle());
+        dto.setPrice(book.getPrice());
+        dto.setIsbn13(book.getIsbn13());
+        dto.setPublishedYear(book.getPublishedYear());
+
+        if (book.getAuthor() != null) {
+            dto.setAuthorNameSurname(book.getAuthor().getAuthorNameSurname());
+        }
+
+        if (book.getPublisher() != null) {
+            dto.setPublisherName(book.getPublisher().getPublisherName());
+        }
+
+        return dto;
     }
 
 }
