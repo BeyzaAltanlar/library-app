@@ -29,6 +29,6 @@ com.example.libraryapp
    - Create, read, update, delete books, authors, and publishers  
 
 2. **Filtering**  
-   - Books starting with 'A' (Stream API)  
-   - Books published after 2023 (JPA query method)  
+   - Books starting with 'A' 
+   - Books published after 2023 
    - List books and authors from the top 2 publishers  
